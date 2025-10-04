@@ -30,3 +30,10 @@ An AI-powered voice interface for MySQL. Converts spoken queries into SQL, execu
 git clone https://github.com/your-username/your-repo-name.git
 cd your-repo-name
 pip install -r requirements.txt
+```
+
+## Security
+- SQL injection protection
+- Role-based query filtering (optional)
+- Environment-based credential management
+
