@@ -63,3 +63,8 @@ pip install -r requirements.txt
 - Role-based query filtering (optional)
 - Environment-based credential management
 
+## 🚀 Future Feature Implementations
+
+- Telegram bot interaction:
+  - Send voice queries to the AI agent via Telegram
+  - Receive natural-language responses directly in the 
