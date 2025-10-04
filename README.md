@@ -15,3 +15,18 @@ An AI-powered voice interface for MySQL. Converts spoken queries into SQL, execu
 - 🔒 Input sanitization and query validation
 
 ## Architecture
+
+
+
+## Tech Stack
+- Python
+- OpenAI / Local LLM
+- Whisper / Google Speech API
+- MySQL Connector / SQLAlchemy
+- Optional: pyttsx3 (Text-to-Speech), Gradio/Streamlit (UI)
+
+## Setup
+```bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+pip install -r requirements.txt
