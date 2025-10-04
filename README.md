@@ -41,7 +41,7 @@ An AI-powered voice interface for MySQL. Converts spoken queries into SQL, execu
 
 ## Setup
 ```bash
-git clone https://github.com/DiogoMag/https://github.com/DiogoMag/Voice-to-SQL-AI-Agent.git
+git clone https://github.com/DiogoMag/Voice-to-SQL-AI-Agent.git
 cd Voice-to-SQL-AI-Agent
 pip install -r requirements.txt
 ```
