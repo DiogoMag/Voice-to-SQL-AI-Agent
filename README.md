@@ -38,6 +38,17 @@ An AI-powered voice interface for MySQL. Converts spoken queries into SQL, execu
 - Whisper / Google Speech API
 - MySQL Connector / SQLAlchemy
 - Optional: pyttsx3 (Text-to-Speech), Gradio/Streamlit (UI)
+  
+## 🧰 Tech Stack Mapping
+| Component                        | Package(s) in `requirements.txt`                                     |
+|----------------------------------|----------------------------------------------------------------------|
+| **Python**                       | Base language – no package needed                                    |
+| **OpenAI / Local LLM**           | `openai`, `transformers`, `torch`                                    |
+| **Whisper / Google Speech API**  | `whisper`, `SpeechRecognition`, `pyaudio`                            |
+| **MySQL Connector / SQLAlchemy** | `mysql-connector-python`, `SQLAlchemy` (optional ORM)                |
+| **Text-to-Speech (optional)**    | `pyttsx3`                                                             |
+| **UI (optional)**                | `gradio` or `streamlit`                                              |
+| **Environment Config**           | `python-dotenv`                                                      |
 
 ## Setup
 ```bash
