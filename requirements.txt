@@ -1,0 +1,12 @@
+openai
+whisper
+SpeechRecognition
+pyaudio
+mysql-connector-python
+SQLAlchemy          # Optional if using ORM
+python-dotenv
+transformers
+torch
+pyttsx3             # Optional: for TTS
+gradio              # Optional: for UI
+# or streamlit       # Optional: alternative UI
