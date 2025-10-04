@@ -1,8 +1,10 @@
 # Voice-Activated MySQL AI Agent
-AI-powered voice interface for MySQL. Converts spoken queries into SQL, retrieves results, and responds in natural language.
+
+
 
 ## Overview
 An AI-powered voice interface for MySQL. Converts spoken queries into SQL, executes them, and returns natural-language responses. Designed for intuitive, hands-free data exploration.
+
 
 ## Features
 - 🎙️ Voice input via speech-to-text
@@ -10,6 +12,7 @@ An AI-powered voice interface for MySQL. Converts spoken queries into SQL, execu
 - 🗄️ Secure MySQL query execution
 - 💬 Human-readable response formatting
 - 🔒 Input sanitization and query validation
+
 
 ## Architecture
 
@@ -28,9 +31,7 @@ An AI-powered voice interface for MySQL. Converts spoken queries into SQL, execu
 - sql_executor.py: Connects to MySQL and runs queries.
 - response_builder.py: Converts raw results into readable answers.
 - main.py: Orchestrates the full pipeline.
-
-📊 Diagram
-
+  
 
 ## Tech Stack
 - Python
