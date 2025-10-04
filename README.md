@@ -14,30 +14,20 @@ An AI-powered voice interface for MySQL. Converts spoken queries into SQL, execu
 ## Architecture
 
 🔄 Data Flow Overview
-Voice Input: User speaks a query.
-
-Speech-to-Text: Converts voice to text (e.g., Whisper).
-
-NLP Interpretation: AI agent parses intent and generates SQL.
-
-SQL Validation: Sanitizes and validates the query.
-
-Database Execution: Runs the query on MySQL.
-
-Response Generation: Formats results into natural language.
-
-(Optional) Text-to-Speech: Speaks the answer back to the user.
+- Voice Input: User speaks a query.
+- Speech-to-Text: Converts voice to text (e.g., Whisper).
+- NLP Interpretation: AI agent parses intent and generates SQL.
+- SQL Validation: Sanitizes and validates the query.
+- Database Execution: Runs the query on MySQL.
+- Response Generation: Formats results into natural language.
+- (Optional) Text-to-Speech: Speaks the answer back to the user.
 
 🧱 Component Breakdown
-voice_input.py: Captures and transcribes voice.
-
-nlp_agent.py: Uses LLM to interpret and generate SQL.
-
-sql_executor.py: Connects to MySQL and runs queries.
-
-response_builder.py: Converts raw results into readable answers.
-
-main.py: Orchestrates the full pipeline.
+- voice_input.py: Captures and transcribes voice.
+- nlp_agent.py: Uses LLM to interpret and generate SQL.
+- sql_executor.py: Connects to MySQL and runs queries.
+- response_builder.py: Converts raw results into readable answers.
+- main.py: Orchestrates the full pipeline.
 
 📊 Diagram
 
