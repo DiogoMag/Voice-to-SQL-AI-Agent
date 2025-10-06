@@ -1,2 +1,15 @@
 aisql_env/
 config/
+samples/
+
+# Ignore the venv folder
+venv/
+
+# Ignore all __pycache__ folders
+__pycache__/
+
+# Ignore a folder named logs
+logs/
+
+# Ignore nested folders named temp
+**/temp/
