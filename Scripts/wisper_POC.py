@@ -1,8 +1,13 @@
-# 1. Voice Input (Whisper)
-# Task: Transcribe spoken English into text.
-# Tech: Use openai-whisper or whisper.cpp for local inference.
-    
+import os
 import whisper
-model = whisper.load_model("base")
-result = model.transcribe("audio.wav")
-query_text = result["text"]
+
+# Add FFmpeg to PATH
+os.environ["PATH"] += os.pathsep + r"D:\Software\ffmpeg-8.0-full_build\bin"
+
+# Load model and move to GPU
+model = whisper.load_model("base").to("cuda")
+
+# Transcribe
+result = model.transcribe("../samples/whatsap_sample_1.wav")
+
+print("Transcription:\n", result["text"])
