@@ -1,8 +1,15 @@
 import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import configparser
 
-TOKEN = "8171772643:AAHjm5qGGa_FsM9EqpkyuilHKZZ25AKCFTk"
+# Load config values from ../config/config.ini
+config = configparser.ConfigParser()
+config.read('../config/config.ini')
+
+TOKEN = config['telegram']['TOKEN']
+
+
 
 # -----------------------------
 # Função para obter preço BTC
