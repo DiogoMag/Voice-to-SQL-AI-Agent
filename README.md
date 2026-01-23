@@ -1,70 +1,152 @@
-# Voice-Activated MySQL AI Agent
+# 🗣️ Voice Telegram Pi Assistant
 
+Voice messages → Raspberry Pi → STT → LLM → RDS (todos/shopping) → TTS replies
 
+## 📖 Table of Contents
+- [🚀 Quick Start](#-quick-start)
+- [✨ Features](#features)
+- [🏗️ Architecture](#architecture)
+- [🛠️ Tech Stack](#tech-stack)
+- [⚙️ Configuration](#configuration)
+- [🗄️ Database Schema](#database-schema)
+- [🔧 Development](#development)
+- [📈 Roadmap](#roadmap)
 
-## Overview
-An AI-powered voice interface for MySQL. Converts spoken queries into SQL, executes them, and returns natural-language responses. Designed for intuitive, hands-free data exploration.
-
-
-## Features
-- 🎙️ Voice input via speech-to-text
-- 🧠 Natural language understanding and SQL generation
-- 🗄️ Secure MySQL query execution
-- 💬 Human-readable response formatting
-- 🔒 Input sanitization and query validation
-
-
-## Architecture
-
-🔄 Data Flow Overview
-- Voice Input: User speaks a query.
-- Speech-to-Text: Converts voice to text (e.g., Whisper).
-- NLP Interpretation: AI agent parses intent and generates SQL.
-- SQL Validation: Sanitizes and validates the query.
-- Database Execution: Runs the query on MySQL.
-- Response Generation: Formats results into natural language.
-- (Optional) Text-to-Speech: Speaks the answer back to the user.
-
-🧱 Component Breakdown
-- voice_input.py: Captures and transcribes voice.
-- nlp_agent.py: Uses LLM to interpret and generate SQL.
-- sql_executor.py: Connects to MySQL and runs queries.
-- response_builder.py: Converts raw results into readable answers.
-- main.py: Orchestrates the full pipeline.
-  
-
-## Tech Stack
-- Python
-- OpenAI / Local LLM
-- Whisper / Google Speech API
-- MySQL Connector / SQLAlchemy
-- Optional: pyttsx3 (Text-to-Speech), Gradio/Streamlit (UI)
-  
-## 🧰 Tech Stack Mapping
-| Component                        | Package(s) in `requirements.txt`                                     |
-|----------------------------------|----------------------------------------------------------------------|
-| **Python**                       | Base language – no package needed                                    |
-| **OpenAI / Local LLM**           | `openai`, `transformers`, `torch`                                    |
-| **Whisper / Google Speech API**  | `whisper`, `SpeechRecognition`, `pyaudio`                            |
-| **MySQL Connector / SQLAlchemy** | `mysql-connector-python`, `SQLAlchemy` (optional ORM)                |
-| **Text-to-Speech (optional)**    | `pyttsx3`                                                             |
-| **UI (optional)**                | `gradio` or `streamlit`                                              |
-| **Environment Config**           | `python-dotenv`                                                      |
-
-## Setup
+## 🚀 Quick Start
 ```bash
-git clone https://github.com/DiogoMag/Voice-to-SQL-AI-Agent.git
-cd Voice-to-SQL-AI-Agent
+git clone https://github.com/yourusername/voice-telegram-pi.git && cd voice-telegram-pi
+cp .env.example .env && nano .env  # Add your tokens/keys
 pip install -r requirements.txt
+python src/bot.py
 ```
 
-## Security
-- SQL injection protection
-- Role-based query filtering (optional)
-- Environment-based credential management
+Send a voice message to your Telegram bot and get audio replies!
 
-## 🚀 Future Feature Implementations
+## ✨ Features
+- 🔄 Full voice→text→LLM→voice pipeline
+- 🛒 Shopping list queries from RDS RA3
+- ✅ Todo list retrieval and formatting
+- 🤖 Intent-based routing (general Qs vs data/tools)
+- 🥧 Optimized for Raspberry Pi deployment
 
-- Telegram bot interaction:
-  - Send voice queries to the AI agent via Telegram
-  - Receive natural-language responses directly in the 
+## 🏗️ Architecture
+
+```
+Telegram Voice Msg → bot.py 
+                    ↓
+                stt.py (Whisper)
+                    ↓
+            intent_router.py ──┐
+                               ├─ LLM (general Qs)
+                               └─ RDS RA3 (lists)
+                                         ↓
+                                      tts.py
+                                         ↓
+                                   Telegram Reply
+```
+
+**Core modules:**
+- `src/bot.py` - Telegram handler & audio forwarding
+- `src/audio/stt.py` - Speech-to-text
+- `src/audio/tts.py` - Text-to-speech  
+- `src/llm/client.py` - LLM API wrapper
+- `src/rds/client.py` - RDS RA3 queries
+- `src/core/intent_router.py` - Routes queries to LLM or DB
+- `src/core/pipeline.py` - End-to-end orchestration
+
+## 🛠️ Tech Stack
+| Component | Technology |
+|-----------|------------|
+| Language | Python 3.11+ |
+| Runtime | Raspberry Pi OS |
+| Bot Framework | python-telegram-bot |
+| STT | OpenAI Whisper (local) |
+| TTS | gTTS or ElevenLabs |
+| LLM | OpenAI GPT-4o-mini |
+| Database | Amazon RDS RA3 (PostgreSQL) |
+
+**Requirements:**
+```bash
+pip install python-telegram-bot openai-whisper gtts psycopg2-binary openai python-dotenv
+```
+
+## ⚙️ Configuration
+Copy `.env.example` → `.env`:
+
+```env
+# Telegram
+TELEGRAM_BOT_TOKEN=your_botfather_token
+
+# LLM  
+OPENAI_API_KEY=sk-your-openai-key
+
+# RDS RA3 (PostgreSQL)
+RDS_HOST=your-rds-endpoint.rds.amazonaws.com
+RDS_PORT=5432
+RDS_USER=your_db_user
+RDS_PASSWORD=your_db_password
+RDS_DB_NAME=personal_assistant
+
+# Audio
+STT_MODEL=base
+TTS_VOICE=en-GB-Standard-A
+```
+
+## 🗄️ Database Schema
+```sql
+-- Shopping list
+CREATE TABLE shopping_list (
+  id SERIAL PRIMARY KEY,
+  user_id VARCHAR(50) NOT NULL,
+  item_name VARCHAR(200) NOT NULL,
+  quantity VARCHAR(50),
+  added_at TIMESTAMP DEFAULT NOW(),
+  status VARCHAR(20) DEFAULT 'pending'
+);
+
+-- Todo list  
+CREATE TABLE todos (
+  id SERIAL PRIMARY KEY,
+  user_id VARCHAR(50) NOT NULL,
+  task TEXT NOT NULL,
+  due_date TIMESTAMP,
+  status VARCHAR(20) DEFAULT 'open',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## 🔧 Development
+**Project structure:**
+```
+voice-telegram-pi/
+├── src/
+│   ├── bot.py          # Telegram entrypoint
+│   ├── audio/         # STT/TTS modules
+│   ├── core/          # Pipeline & intent logic
+│   ├── llm/           # LLM client
+│   └── rds/           # Database client
+├── .env.example
+├── requirements.txt
+└── README.md
+```
+
+**Add new intents:**
+1. Update `intent_router.py` with keyword patterns
+2. Add handler in `core/handlers.py`
+3. Test with voice: "What's on my shopping list?"
+
+**Conventions:**
+- PEP8 + type hints (`mypy`)
+- Structured logging
+- Virtualenv required
+
+## 📈 Roadmap
+- [ ] Unit tests for intent routing
+- [ ] Multi-language STT/TTS
+- [ ] RDS connection pooling
+- [ ] Voice command history
+- [ ] Docker deployment
+
+***
+
+**👤 Author**: Diogo M
