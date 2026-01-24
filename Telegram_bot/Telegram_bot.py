@@ -1,126 +1,149 @@
-import requests
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+import os
 import configparser
+import tempfile
+from pathlib import Path
+
+import whisper
+from gtts import gTTS
+from openai import OpenAI
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+
+# Add FFmpeg to PATH (required for audio processing)
+os.environ["PATH"] += os.pathsep + r"D:\Software\ffmpeg-8.0-full_build\bin"
 
 # Load config values from ../config/config.ini
 config = configparser.ConfigParser()
-config.read('../config/config.ini')
+config_path = Path(__file__).parent.parent / 'config' / 'config.ini'
+config.read(config_path)
 
-TOKEN = config['telegram']['TOKEN']
+TELEGRAM_TOKEN = config['telegram']['TOKEN']
+OPENAI_API_KEY = config['openai']['api_key']
+OPENAI_MODEL = config['openai']['model']
+OPENAI_TEMPERATURE = float(config['openai']['temperature'])
 
+# Initialize OpenAI client
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Load Whisper model (use "base" for speed, "medium" or "large" for accuracy)
+print("Loading Whisper model...")
+whisper_model = whisper.load_model("base").to("cuda")
+print("Whisper model loaded!")
+
+
+# -----------------------------
+# Speech-to-Text (Whisper)
+# -----------------------------
+def transcribe_audio(audio_path: str) -> str:
+    """Convert audio file to text using Whisper."""
+    result = whisper_model.transcribe(audio_path)
+    text = result["text"]
+    if isinstance(text, str):
+        return text.strip()
+    return str(text).strip()
 
 
 # -----------------------------
-# Função para obter preço BTC
+# LLM Response (OpenAI)
 # -----------------------------
-def get_btc_price_usd():
-    url = "https://api.coingecko.com/api/v3/simple/price"
-    params = {"ids": "bitcoin", "vs_currencies": "usd"}
-    response = requests.get(url, params=params).json()
-    return response["bitcoin"]["usd"]
+def get_llm_response(user_message: str) -> str:
+    """Get response from OpenAI LLM."""
+    response = openai_client.chat.completions.create(
+        model=OPENAI_MODEL,
+        temperature=OPENAI_TEMPERATURE,
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant. Keep responses concise and conversational."},
+            {"role": "user", "content": user_message}
+        ]
+    )
+    return response.choices[0].message.content or "Sorry, I couldn't generate a response."
+
 
 # -----------------------------
-# Função para obter Fear & Greed
+# Text-to-Speech (gTTS)
 # -----------------------------
-def get_fng():
-    url = "https://api.alternative.me/fng/"
-    response = requests.get(url).json()
-    value = response["data"][0]["value"]
-    classification = response["data"][0]["value_classification"]
-    return value, classification
+def text_to_speech(text: str, output_path: str, lang: str = "en") -> None:
+    """Convert text to audio file using gTTS."""
+    tts = gTTS(text=text, lang=lang)
+    tts.save(output_path)
+
 
 # -----------------------------
-# Comando /btc
+# Voice Message Handler
 # -----------------------------
-async def btc(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle incoming voice messages."""
+    if update.message is None or update.message.voice is None:
+        return
+
+    await update.message.reply_text("🎤 Processing your voice message...")
+
     try:
-        price = get_btc_price_usd()
-        await update.message.reply_text(f"💰 BTC: {price} USD")
-    except:
-        await update.message.reply_text("Erro ao obter o preço do BTC.")
+        # Create temp directory for audio files
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Download voice message
+            voice_file = await update.message.voice.get_file()
+            input_path = os.path.join(temp_dir, "input.ogg")
+            await voice_file.download_to_drive(input_path)
+
+            # STT: Convert voice to text
+            user_text = transcribe_audio(input_path)
+            print(f"User said: {user_text}")
+
+            # Send transcription to user
+            await update.message.reply_text(f"📝 You said: {user_text}")
+
+            # LLM: Get response
+            llm_response = get_llm_response(user_text)
+            print(f"LLM response: {llm_response}")
+
+            # TTS: Convert response to audio
+            output_path = os.path.join(temp_dir, "response.mp3")
+            text_to_speech(llm_response, output_path)
+
+            # Send audio response
+            with open(output_path, "rb") as audio_file:
+                await update.message.reply_voice(voice=audio_file)
+
+            # Also send text response
+            await update.message.reply_text(f"💬 {llm_response}")
+
+    except Exception as e:
+        print(f"Error processing voice message: {e}")
+        await update.message.reply_text(f"❌ Error processing voice message: {str(e)}")
+
 
 # -----------------------------
-# Comando /fng
-# -----------------------------
-async def fng(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        value, classification = get_fng()
-        await update.message.reply_text(
-            f"📊 Fear & Greed Index\n\nValor: {value}\nSentimento: {classification}"
-        )
-    except:
-        await update.message.reply_text("Erro ao obter o Fear & Greed Index.")
-
-# -----------------------------
-# Comando /market (BTC + FNG)
-# -----------------------------
-async def market(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        price = get_btc_price_usd()
-        value, classification = get_fng()
-
-        await update.message.reply_text(
-            f"📈 **Market Overview**\n\n"
-            f"💰 BTC: {price} USD\n"
-            f"📊 Fear & Greed: {value} ({classification})"
-        )
-
-    except:
-        await update.message.reply_text("Erro ao obter dados do mercado.")
-
-# -----------------------------
-# Comando /shouldibuy
-# -----------------------------
-async def should_i_buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        value, classification = get_fng()
-        value = int(value)
-
-        if value < 25:
-            await update.message.reply_text(
-                f"🤔 Should you buy?\n\n"
-                f"📊 Fear & Greed: {value} ({classification})\n"
-                f"✅ O índice está abaixo de 25 — zona de medo.\n"
-                f"💡 Pode ser uma boa altura para comprar."
-            )
-        else:
-            await update.message.reply_text(
-                f"🤔 Should you buy?\n\n"
-                f"📊 Fear & Greed: {value} ({classification})\n"
-                f"❌ O índice está acima de 25.\n"
-                f"💡 Não recomendo comprar agora."
-            )
-
-    except:
-        await update.message.reply_text("Erro ao obter dados para análise.")
-
-# -----------------------------
-# Start
+# Command /start
 # -----------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message is None:
+        return
     await update.message.reply_text(
-        "Bot is On! Commands avaiable:\n"
-        "/btc - Bitcoin Price\n"
-        "/fng - Fear & Greed Index\n"
-        "/market - Market Vision\n"
-        "/shouldibuy - Ask a recomendation based on FnG"
+        "🎤 Voice Assistant Bot\n\n"
+        "Send me a voice message and I'll:\n"
+        "1. Convert it to text\n"
+        "2. Process it with AI\n"
+        "3. Reply with voice!\n\n"
+        "Just record and send a voice message to get started."
     )
+
 
 # -----------------------------
 # Main
 # -----------------------------
 def main():
-    app = ApplicationBuilder().token(TOKEN).build()
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
+    # Command handlers
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("btc", btc))
-    app.add_handler(CommandHandler("fng", fng))
-    app.add_handler(CommandHandler("market", market))
-    app.add_handler(CommandHandler("shouldibuy", should_i_buy))
+
+    # Voice message handler
+    app.add_handler(MessageHandler(filters.VOICE, handle_voice))
 
     print("Bot is running...")
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()

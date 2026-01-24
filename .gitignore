@@ -13,3 +13,10 @@ logs/
 
 # Ignore nested folders named temp
 **/temp/
+
+# Environment files
+.env
+.env.local
+
+# Temporary files for voice processing
+**/telegram_voice_bot/
