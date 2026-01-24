@@ -1,0 +1,7 @@
+{
+  "items": [
+    {"name": "Milk", "status": "pending"},
+    {"name": "Bread", "status": "pending"},
+    {"name": "Eggs", "status": "completed"}
+  ]
+}
