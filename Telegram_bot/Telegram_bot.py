@@ -4,7 +4,6 @@ import tempfile
 from pathlib import Path
 
 import whisper
-from gtts import gTTS
 from openai import OpenAI
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
@@ -52,7 +51,13 @@ def get_llm_response(user_message: str) -> str:
         model=OPENAI_MODEL,
         temperature=OPENAI_TEMPERATURE,
         messages=[
-            {"role": "system", "content": "You are a helpful assistant. Keep responses concise and conversational."},
+            {"role": "system", "content": (
+                "You are a voice assistant. The user is speaking to you via voice messages "
+                "which are transcribed to text. Your response will be converted to speech "
+                "and played back to the user. Keep responses concise, natural, and conversational. "
+                "Avoid using markdown, bullet points, or special formatting since your response "
+                "will be spoken aloud."
+            )},
             {"role": "user", "content": user_message}
         ]
     )
@@ -60,12 +65,17 @@ def get_llm_response(user_message: str) -> str:
 
 
 # -----------------------------
-# Text-to-Speech (gTTS)
+# Text-to-Speech (OpenAI TTS)
 # -----------------------------
-def text_to_speech(text: str, output_path: str, lang: str = "en") -> None:
-    """Convert text to audio file using gTTS."""
-    tts = gTTS(text=text, lang=lang)
-    tts.save(output_path)
+def text_to_speech(text: str, output_path: str, voice: str = "coral") -> None:
+    """Convert text to audio file using OpenAI TTS."""
+    with openai_client.audio.speech.with_streaming_response.create(
+        model="tts-1",
+        voice=voice,
+        input=text,
+        speed=1.25
+    ) as response:
+        response.stream_to_file(output_path)
 
 
 # -----------------------------
